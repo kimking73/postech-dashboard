@@ -424,20 +424,29 @@
 
   /* ══ Mobile ══ */
   @media (max-width: 640px) {
-    /* Header */
+    /* Header — 2줄 레이아웃:
+       1줄: 로고 + 타이틀 + (spacer) + 테마버튼 + 업데이트버튼
+       2줄: 네비탭 */
     .header {
-      padding: 0 14px;
+      padding: 10px 14px 8px;
       height: auto;
-      min-height: 50px;
       flex-wrap: wrap;
-      padding-top: 9px;
-      padding-bottom: 9px;
-      gap: 8px;
+      align-content: flex-start;
+      gap: 0;
+      row-gap: 6px;
+      column-gap: 8px;
     }
-    .header-title { font-size: 13px; }
-    .nav-tab { padding: 4px 9px; font-size: 11px; }
-    #theme-btn { padding: 5px 9px; font-size: 11px; }
-    .update-area { gap: 6px; }
+    .logo { flex-shrink: 0; }
+    .header-title { font-size: 13px; flex: 1; min-width: 0; }
+    .nav-tabs {
+      order: 10;
+      width: 100%;
+      margin-left: 0;
+      gap: 4px;
+    }
+    .header-spacer { display: none; }
+    #theme-btn { padding: 5px 9px; font-size: 11px; flex-shrink: 0; }
+    .update-area { gap: 5px; flex-shrink: 0; }
     .last-updated { display: none; }
     .update-btn { padding: 5px 9px; font-size: 11px; }
 
@@ -447,7 +456,7 @@
     .nav-arrow { width: 28px; height: 28px; font-size: 13px; }
     .legend { display: none; }
 
-    /* Calendar cells — dots only on mobile */
+    /* Calendar cells — 컬러 점으로 표시 */
     .cal-cell { padding: 4px 5px; gap: 2px; }
     .cell-date { font-size: 10px; }
     .event-chips { flex-direction: row; flex-wrap: wrap; gap: 2px; }
@@ -467,7 +476,7 @@
     .chip.cat-공모전.type-deadline { background: var(--c-con); }
     .more-chips { font-size: 8px; line-height: 8px; }
 
-    /* Side panel → bottom sheet */
+    /* Side panel → 하단 시트 */
     .side-panel {
       position: fixed;
       bottom: 0; left: 0; right: 0;
@@ -487,19 +496,18 @@
     }
     .panel-backdrop.show { display: block; }
 
-    /* Bottom sheet handle */
-    .panel-header::before {
+    /* 하단 시트 핸들 바 */
+    .side-panel::before {
       content: '';
       display: block;
       width: 36px; height: 4px;
       background: var(--wire-em);
       border-radius: 2px;
-      margin: 0 auto 12px;
+      margin: 10px auto 0;
+      flex-shrink: 0;
     }
-    .panel-header { flex-direction: column; align-items: stretch; }
-    .panel-header > div, .panel-header > button {
-      display: flex; align-items: center; justify-content: space-between;
-    }
+    .panel-header { padding: 8px 16px 12px; }
+    .panel-events { padding: 10px 12px; }
   }
 </style>
 </head>
