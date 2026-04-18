@@ -200,7 +200,8 @@
 
   .cal-grid {
     flex: 1; display: grid; grid-template-columns: repeat(7, 1fr);
-    grid-auto-rows: 1fr; overflow: hidden;
+    grid-auto-rows: minmax(105px, 1fr);
+    overflow-y: auto; overflow-x: hidden;
     background: var(--wire);
     gap: 1px;
   }
@@ -233,13 +234,21 @@
   .event-chips { display: flex; flex-direction: column; gap: 2px; overflow: hidden; flex: 1; min-height: 0; }
 
   .chip {
-    font-size: 10px; font-weight: 500; padding: 2px 6px; border-radius: 4px;
-    cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 10px; font-weight: 500; padding: 3px 6px; border-radius: 4px;
+    cursor: pointer; overflow: hidden;
     transition: filter 0.1s; flex-shrink: 0;
-    display: flex; align-items: center; gap: 3px;
+    display: flex; align-items: flex-start; gap: 3px;
+    line-height: 1.35;
   }
   .chip:hover { filter: brightness(0.93); }
-  .chip .chip-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .chip .chip-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
+  .chip-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+  }
 
   /* Deadline chip — always red-tinted */
   .chip.type-deadline {
@@ -626,6 +635,14 @@ async function loadEvents() {
   } catch (_) {}
 }
 
+function summarize(title) {
+  return title
+    .replace(/^\[[\s\S]+?\]\s*/g, '')           // [prefix] 제거
+    .replace(/^20\d\d\s*(학년도|년)?\s*/g, '')  // 연도 제거
+    .replace(/\s*[–—]\s*.+$/, '')               // em-dash 이후 부제 제거
+    .trim();
+}
+
 const parseDate = s => { const d = new Date(s + 'T00:00:00'); d.setHours(0,0,0,0); return d; };
 const dateKey  = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const diffDays = d => Math.round((d - TODAY) / 86400000);
@@ -692,7 +709,7 @@ function renderCalendar() {
     if (items.length > 0) {
       const chipsDiv = document.createElement('div');
       chipsDiv.className = 'event-chips';
-      const maxVisible = 3;
+      const maxVisible = 4;
       const visible = items.slice(0, maxVisible);
       const hidden = items.length - maxVisible;
 
@@ -700,7 +717,7 @@ function renderCalendar() {
         const chip = document.createElement('div');
         const cc = catClass(ev.category);
         chip.className = `chip type-${type} cat-${cc}`;
-        chip.innerHTML = `<span class="chip-dot"></span>${ev.title.substring(0,22)}${ev.title.length > 22 ? '…' : ''}`;
+        chip.innerHTML = `<span class="chip-dot"></span><span class="chip-text">${summarize(ev.title)}</span>`;
         chip.onclick = e => { e.stopPropagation(); openPanel(key, items, d); };
         chipsDiv.appendChild(chip);
       }
