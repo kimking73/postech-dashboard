@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POSTECH 학생 대시보드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script>(function(){const t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+  :root {
+    /* 눈에 편한 배경 계층 — 순백 없음 */
+    --page:    #e6e9f4;   /* 전체 배경: 차분한 라벤더-회색 */
+    --paper:   #f4f5fb;   /* 카드 표면: 순백 대신 아주 연한 청백 */
+    --paper-2: #ffffff;   /* 가장 밝은 표면: 모달/드롭다운 */
+    --lift:    #dde0ee;   /* 눌린 요소: 배경보다 살짝 어두운 회청 */
+
+    /* 테두리 */
+    --wire:    rgba(30,40,80,0.08);
+    --wire-em: rgba(30,40,80,0.15);
+
+    /* 텍스트 — 강한 대비 */
+    --ink:   #1a1f35;   /* 주 텍스트: 네이비-차콜 */
+    --ink-2: #525d7a;   /* 보조 텍스트 */
+    --ink-3: #8b96b5;   /* 메타/비활성 */
+
+    /* 브랜드 */
+    --postech: #1e3a8a;
+    --blue:    #3b82f6;
+
+    /* 카테고리 — 라이트 파스텔 계열 */
+    --c-lec: #7c3aed; --c-lec-bg: #ede9fe; --c-lec-tx: #5b21b6;
+    --c-res: #0284c7; --c-res-bg: #e0f2fe; --c-res-tx: #0369a1;
+    --c-rec: #059669; --c-rec-bg: #d1fae5; --c-rec-tx: #065f46;
+    --c-ovs: #d97706; --c-ovs-bg: #fef3c7; --c-ovs-tx: #92400e;
+    --c-sch: #dc2626; --c-sch-bg: #fee2e2; --c-sch-tx: #991b1b;
+    --c-con: #c026d3; --c-con-bg: #fae8ff; --c-con-tx: #86198f;
+
+    --mono: 'SF Mono', 'Menlo', 'Courier New', monospace;
+  }
+
+  [data-theme="dark"] {
+    --page:    #0d1117;
+    --paper:   #141c2e;
+    --paper-2: #1a2440;
+    --lift:    #1e2a42;
+
+    --wire:    rgba(255,255,255,0.07);
+    --wire-em: rgba(255,255,255,0.13);
+
+    --ink:   #dde3f0;
+    --ink-2: #7a8aaa;
+    --ink-3: #3f4d68;
+
+    --postech: #4f7ef8;
+    --blue:    #60a5fa;
+
+    --c-lec: #a78bfa; --c-lec-bg: rgba(124,58,237,0.2);  --c-lec-tx: #c4b5fd;
+    --c-res: #38bdf8; --c-res-bg: rgba(2,132,199,0.2);   --c-res-tx: #7dd3fc;
+    --c-rec: #34d399; --c-rec-bg: rgba(5,150,105,0.2);   --c-rec-tx: #6ee7b7;
+    --c-ovs: #fbbf24; --c-ovs-bg: rgba(217,119,6,0.2);   --c-ovs-tx: #fcd34d;
+    --c-sch: #f87171; --c-sch-bg: rgba(220,38,38,0.2);   --c-sch-tx: #fca5a5;
+    --c-con: #e879f9; --c-con-bg: rgba(192,38,211,0.2);  --c-con-tx: #f0abfc;
+  }
+  [data-theme="dark"] .header { box-shadow: 0 1px 0 var(--wire); }
+  [data-theme="dark"] .filter-btn.active { background: rgba(96,165,250,0.15); border-color: rgba(96,165,250,0.35); color: #93c5fd; }
+  [data-theme="dark"] .sort-dropdown { box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+  [data-theme="dark"] .tl-day.today .tl-day-col { background: rgba(59,130,246,0.2); }
+  [data-theme="dark"] .urgent-card.days-0 { background: rgba(220,38,38,0.1); box-shadow: 0 3px 12px rgba(220,38,38,0.2), 0 0 0 1px rgba(220,38,38,0.3); }
+  [data-theme="dark"] .date-chip.mod-urgent { background: rgba(220,38,38,0.2); }
+  [data-theme="dark"] .date-chip.mod-urgent .cd { color: #fca5a5; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', -apple-system, sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ══════════════════════════════
+     Header
+  ══════════════════════════════ */
+  .header {
+    background: var(--paper);
+    border-bottom: 1px solid var(--wire);
+    padding: 0 28px;
+    height: 56px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    position: sticky; top: 0; z-index: 50;
+    box-shadow: 0 1px 4px rgba(30,40,80,0.06);
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+
+  .logo {
+    width: 32px; height: 32px; background: var(--postech);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1px;
+    flex-shrink: 0;
+  }
+  .logo span {
+    font-family: var(--mono); font-size: 6.5px; font-weight: 700;
+    color: rgba(255,255,255,0.95); letter-spacing: 0.4px; line-height: 1;
+  }
+
+  .header-title h1 { font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: -0.4px; }
+  .header-title p  { font-size: 10.5px; color: var(--ink-3); margin-top: 1px; font-weight: 400; }
+
+  .nav-tabs { display: flex; gap: 2px; margin-left: 8px; }
+  .nav-tab {
+    padding: 5px 12px; border-radius: 7px; font-size: 12px; font-weight: 500;
+    border: none; color: var(--ink-3);
+    background: transparent; text-decoration: none; transition: all 0.15s; cursor: pointer;
+  }
+  .nav-tab:hover  { color: var(--ink); background: var(--lift); }
+  .nav-tab.active { background: var(--postech); color: #fff; }
+
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .event-count { font-size: 12px; color: var(--ink-3); font-weight: 400; }
+  .event-count strong { font-size: 20px; font-weight: 700; color: var(--blue); margin-right: 2px; vertical-align: -2px; letter-spacing: -0.5px; }
+
+  .btn-refresh {
+    background: var(--lift); border: none;
+    color: var(--ink-2); padding: 6px 13px; border-radius: 8px;
+    cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.15s;
+    font-family: inherit;
+  }
+  .btn-refresh:hover { background: var(--wire-em); color: var(--ink); }
+
+  /* ══════════════════════════════
+     Filter bar
+  ══════════════════════════════ */
+  .filter-bar {
+    background: var(--paper);
+    border-bottom: 1px solid var(--wire);
+    padding: 8px 28px;
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  }
+  .filter-label {
+    font-family: var(--mono); font-size: 9px; font-weight: 700;
+    color: var(--ink-3); letter-spacing: 0.9px; text-transform: uppercase; margin-right: 2px;
+  }
+  .filter-btn {
+    padding: 4px 12px; border-radius: 20px; border: 1.5px solid var(--wire-em);
+    background: transparent; color: var(--ink-2); font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; white-space: nowrap; font-family: inherit;
+  }
+  .filter-btn:hover { background: var(--lift); color: var(--ink); border-color: var(--wire-em); }
+  .filter-btn.active                         { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+  .filter-btn[data-cat="강연/특강"].active   { background: var(--c-lec-bg); border-color: #c4b5fd; color: var(--c-lec-tx); }
+  .filter-btn[data-cat="연구참여"].active    { background: var(--c-res-bg); border-color: #7dd3fc; color: var(--c-res-tx); }
+  .filter-btn[data-cat="모집"].active        { background: var(--c-rec-bg); border-color: #6ee7b7; color: var(--c-rec-tx); }
+  .filter-btn[data-cat="해외관련"].active    { background: var(--c-ovs-bg); border-color: #fcd34d; color: var(--c-ovs-tx); }
+  .filter-btn[data-cat="장학금"].active      { background: var(--c-sch-bg); border-color: #fca5a5; color: var(--c-sch-tx); }
+  .filter-btn[data-cat="공모전"].active      { background: var(--c-con-bg); border-color: #e879f9; color: var(--c-con-tx); }
+
+  .spacer { flex: 1; }
+
+  .sort-wrap { position: relative; }
+  .sort-trigger {
+    display: flex; align-items: center; gap: 5px;
+    background: var(--lift); border: none;
+    color: var(--ink-2); padding: 5px 11px; border-radius: 8px;
+    font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s;
+    white-space: nowrap; user-select: none; font-family: inherit;
+  }
+  .sort-trigger::after { content: '▾'; font-size: 9px; color: var(--ink-3); }
+  .sort-trigger:hover  { background: var(--wire-em); color: var(--ink); }
+  .sort-dropdown {
+    position: absolute; right: 0; top: calc(100% + 6px); z-index: 100;
+    background: var(--paper-2); border: 1px solid var(--wire-em);
+    border-radius: 10px; overflow: hidden; min-width: 136px; display: none;
+    box-shadow: 0 8px 24px rgba(30,40,80,0.13);
+  }
+  .sort-dropdown.open { display: block; }
+  .sort-option {
+    padding: 9px 14px; font-size: 12px; font-weight: 400; color: var(--ink-2);
+    cursor: pointer; transition: background 0.1s; font-family: inherit;
+  }
+  .sort-option:hover  { background: var(--lift); color: var(--ink); }
+  .sort-option.active { color: var(--blue); font-weight: 600; }
+
+  /* ══════════════════════════════
+     Timeline rail
+  ══════════════════════════════ */
+  .timeline-rail {
+    background: var(--paper);
+    border-bottom: 1px solid var(--wire);
+    padding: 10px 28px 12px;
+  }
+  .timeline-label {
+    font-family: var(--mono); font-size: 9px; color: var(--ink-3);
+    letter-spacing: 0.7px; text-transform: uppercase; margin-bottom: 9px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .timeline-legend { display: flex; align-items: center; gap: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 9px; color: var(--ink-3); }
+  .legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .legend-dot.dl { background: #ef4444; }
+  .legend-dot.ev { background: transparent; border: 1.5px solid #60a5fa; }
+
+  .timeline-track { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+  .timeline-track::-webkit-scrollbar { display: none; }
+
+  .tl-day {
+    flex: 0 0 auto; width: 46px;
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+  }
+  .tl-day-label {
+    font-family: var(--mono); font-size: 9px; color: var(--ink-3);
+    text-align: center; line-height: 1.3; font-weight: 500;
+  }
+  .tl-day.today .tl-day-label { color: var(--blue); font-weight: 700; }
+  .tl-day-col {
+    width: 100%; min-height: 24px;
+    background: var(--lift); border-radius: 6px; padding: 4px;
+    display: flex; flex-wrap: wrap; gap: 2px; align-content: flex-start;
+  }
+  .tl-day.today .tl-day-col { background: #dbeafe; }
+  .tl-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .tl-dot.deadline { background: #ef4444; }
+  .tl-dot.event    { background: transparent; border: 1.5px solid #60a5fa; }
+  .tl-more { font-family: var(--mono); font-size: 7px; color: var(--ink-3); line-height: 7px; }
+
+  /* ══════════════════════════════
+     Main
+  ══════════════════════════════ */
+  .main { padding: 20px 28px 48px; max-width: 1400px; }
+
+  /* ── Urgent strip ── */
+  .urgent-strip { margin-bottom: 28px; }
+  .urgent-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .urgent-pulse {
+    width: 7px; height: 7px; border-radius: 50%; background: #ef4444;
+    animation: pulse 1.4s ease infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(0.7); }
+  }
+  .urgent-title {
+    font-size: 11px; font-weight: 700; color: #dc2626;
+    letter-spacing: 0.6px; text-transform: uppercase;
+  }
+  .urgent-hcount { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+
+  .urgent-card {
+    background: var(--paper);
+    border-radius: 12px; padding: 16px 18px 14px; margin-bottom: 10px;
+    display: grid; grid-template-columns: 68px 1fr; gap: 16px; align-items: start;
+    position: relative; overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.1s;
+    box-shadow: 0 2px 8px rgba(30,40,80,0.07), 0 0 0 1px var(--wire);
+  }
+  .urgent-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+  .urgent-card.days-0 { background: #fff5f5; box-shadow: 0 3px 12px rgba(220,38,38,0.1), 0 0 0 1px rgba(220,38,38,0.18); }
+  .urgent-card.days-0::before { background: #dc2626; }
+  .urgent-card.days-1 { box-shadow: 0 2px 8px rgba(239,68,68,0.08), 0 0 0 1px rgba(239,68,68,0.14); }
+  .urgent-card.days-1::before { background: #ef4444; }
+  .urgent-card.days-2::before { background: #f97316; }
+  .urgent-card.days-3::before { background: #eab308; }
+  .urgent-card:hover { box-shadow: 0 6px 20px rgba(30,40,80,0.12), 0 0 0 1px var(--wire-em); transform: translateY(-1px); }
+  .urgent-card.days-0:hover { box-shadow: 0 6px 20px rgba(220,38,38,0.14), 0 0 0 1px rgba(220,38,38,0.22); }
+
+  .urgent-dday { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 2px; gap: 3px; }
+  .dday-label { font-family: var(--mono); font-weight: 800; line-height: 1; letter-spacing: -1px; font-size: 20px; }
+  .days-0 .dday-label { color: #dc2626; }
+  .days-1 .dday-label { color: #ef4444; }
+  .days-2 .dday-label { color: #f97316; }
+  .days-3 .dday-label { color: #ca8a04; }
+  .dday-sub { font-family: var(--mono); font-size: 9px; color: var(--ink-3); font-weight: 500; }
+
+  .urgent-body { display: flex; flex-direction: column; gap: 6px; }
+  .urgent-card-top { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+  .urgent-card-title {
+    font-size: 14px; font-weight: 700; letter-spacing: -0.3px; line-height: 1.45; color: var(--ink);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .urgent-card-desc {
+    font-size: 12px; font-weight: 400; color: var(--ink-2); line-height: 1.6;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .urgent-card-footer { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+  .depletion-bar { flex: 1; height: 3px; background: var(--lift); border-radius: 2px; overflow: hidden; }
+  .depletion-fill { height: 100%; border-radius: 2px; }
+  .days-0 .depletion-fill { background: #dc2626; }
+  .days-1 .depletion-fill { background: #ef4444; }
+  .days-2 .depletion-fill { background: #f97316; }
+  .days-3 .depletion-fill { background: #eab308; }
+  .urgent-link {
+    font-size: 11px; font-weight: 500; color: var(--blue); text-decoration: none;
+    transition: opacity 0.15s; white-space: nowrap; opacity: 0.7;
+  }
+  .urgent-link:hover { opacity: 1; }
+
+  /* ── Section ── */
+  .section { margin-bottom: 28px; }
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: 13px; font-weight: 700; color: var(--ink-2);
+    letter-spacing: -0.2px;
+  }
+  .section-count {
+    font-family: var(--mono); font-size: 11px; color: var(--ink-3);
+    background: var(--lift); padding: 2px 8px; border-radius: 20px;
+  }
+
+  /* ── Cards ── */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .card {
+    background: var(--paper); border-radius: 12px;
+    padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;
+    position: relative; overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.1s;
+    box-shadow: 0 1px 4px rgba(30,40,80,0.06), 0 0 0 1px var(--wire);
+  }
+  .card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+  .card[data-cat="강연/특강"]::before { background: var(--c-lec); }
+  .card[data-cat="연구참여"]::before  { background: var(--c-res); }
+  .card[data-cat="모집"]::before      { background: var(--c-rec); }
+  .card[data-cat="해외관련"]::before  { background: var(--c-ovs); }
+  .card[data-cat="장학금"]::before    { background: var(--c-sch); }
+  .card[data-cat="공모전"]::before    { background: var(--c-con); }
+  .card:hover { box-shadow: 0 6px 20px rgba(30,40,80,0.1), 0 0 0 1px var(--wire-em); transform: translateY(-1px); }
+
+  .card-title {
+    font-size: 13px; font-weight: 600; line-height: 1.5; letter-spacing: -0.2px; color: var(--ink);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .card-desc {
+    font-size: 12px; font-weight: 400; color: var(--ink-2); line-height: 1.6;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .card-footer { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .card-dates  { display: flex; gap: 5px; flex-wrap: wrap; }
+  .card-link {
+    font-size: 11px; font-weight: 500; color: var(--blue); text-decoration: none;
+    transition: opacity 0.15s; opacity: 0.6; margin-top: 2px;
+  }
+  .card-link:hover { opacity: 1; }
+
+  /* ── Badges ── */
+  .cat-badge {
+    font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px;
+    white-space: nowrap; flex-shrink: 0; letter-spacing: -0.1px;
+  }
+  .cat-badge.강연특강  { color: var(--c-lec-tx); background: var(--c-lec-bg); }
+  .cat-badge.연구참여  { color: var(--c-res-tx); background: var(--c-res-bg); }
+  .cat-badge.모집      { color: var(--c-rec-tx); background: var(--c-rec-bg); }
+  .cat-badge.해외관련  { color: var(--c-ovs-tx); background: var(--c-ovs-bg); }
+  .cat-badge.장학금    { color: var(--c-sch-tx); background: var(--c-sch-bg); }
+  .cat-badge.공모전    { color: var(--c-con-tx); background: var(--c-con-bg); }
+
+  /* ── Date chips ── */
+  .date-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: var(--mono); font-size: 10px; font-weight: 500;
+    padding: 3px 8px; border-radius: 20px; background: var(--lift);
+  }
+  .date-chip .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .date-chip.type-deadline .dot { background: #ef4444; }
+  .date-chip.type-event .dot    { background: #60a5fa; }
+  .date-chip .cd { font-weight: 700; }
+  .date-chip.type-deadline .cd  { color: #dc2626; }
+  .date-chip.type-event .cd     { color: #2563eb; }
+  .date-chip.mod-urgent { background: #fee2e2; }
+  .date-chip.mod-urgent .cd { color: #dc2626; }
+  .date-chip.mod-soon .cd { color: #d97706; }
+
+  /* ── Empty / Footer ── */
+  .empty { text-align: center; padding: 60px; color: var(--ink-3); font-size: 13px; }
+  .footer {
+    text-align: center; padding: 16px; font-size: 10px; color: var(--ink-3);
+    border-top: 1px solid var(--wire); margin-top: 12px;
+    font-family: var(--mono); letter-spacing: 0.2px;
+  }
+
+  @media (max-width: 640px) {
+    .header { padding: 0 16px; }
+    .filter-bar, .timeline-rail, .main { padding-left: 16px; padding-right: 16px; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .urgent-card { grid-template-columns: 52px 1fr; gap: 12px; }
+    .tl-day { width: 40px; }
+    .header-title p { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo"><span>POS</span><span>TECH</span></div>
+    <div class="header-title">
+      <h1>학생 대시보드</h1>
+      <p>POSTECH · 기회 &amp; 일정 모음</p>
+    </div>
+    <nav class="nav-tabs">
+      <a class="nav-tab active">목록</a>
+      <a href="calendar.html" class="nav-tab">달력</a>
+    </nav>
+  </div>
+  <div class="header-right">
+    <div class="event-count"><strong id="event-count">—</strong>개 이벤트</div>
+    <button class="btn-refresh" id="theme-btn" onclick="toggleTheme()">◑ 다크</button>
+    <button class="btn-refresh" onclick="window.location.reload()">↻ 새로고침</button>
+  </div>
+</header>
+
+<div class="filter-bar">
+  <span class="filter-label">카테고리</span>
+  <button class="filter-btn active" data-cat="전체"    onclick="setFilter('전체',this)">전체</button>
+  <button class="filter-btn" data-cat="강연/특강"      onclick="setFilter('강연/특강',this)">강연/특강</button>
+  <button class="filter-btn" data-cat="연구참여"       onclick="setFilter('연구참여',this)">연구참여</button>
+  <button class="filter-btn" data-cat="모집"           onclick="setFilter('모집',this)">모집</button>
+  <button class="filter-btn" data-cat="해외관련"       onclick="setFilter('해외관련',this)">해외관련</button>
+  <button class="filter-btn" data-cat="장학금"         onclick="setFilter('장학금',this)">장학금</button>
+  <button class="filter-btn" data-cat="공모전"         onclick="setFilter('공모전',this)">공모전</button>
+  <div class="spacer"></div>
+  <div class="sort-wrap">
+    <div class="sort-trigger" id="sort-trigger" onclick="toggleSort()">마감 임박순</div>
+    <div class="sort-dropdown" id="sort-dropdown">
+      <div class="sort-option active" onclick="setSort('urgent','마감 임박순',this)">마감 임박순</div>
+      <div class="sort-option"        onclick="setSort('event','행사일순',this)">행사일순</div>
+      <div class="sort-option"        onclick="setSort('added','등록일순',this)">등록일순</div>
+    </div>
+  </div>
+</div>
+
+<div class="timeline-rail">
+  <div class="timeline-label">
+    향후 14일
+    <div class="timeline-legend">
+      <span class="legend-item"><span class="legend-dot dl"></span>마감</span>
+      <span class="legend-item"><span class="legend-dot ev"></span>행사</span>
+    </div>
+  </div>
+  <div class="timeline-track" id="timeline-track"></div>
+</div>
+
+<div class="main">
+  <div id="container"></div>
+  <div class="footer">
+    마지막 수집: 2026-04-18 &nbsp;|&nbsp; 출처: POSTECH 전자게시(boardNo=79, boardNo=348) · ir.postech.ac.kr
+  </div>
+</div>
+
+<script>
+function toggleTheme() {
+  const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('theme', t);
+  document.getElementById('theme-btn').textContent = t === 'dark' ? '☀ 라이트' : '◑ 다크';
+}
+(function(){
+  const t = document.documentElement.getAttribute('data-theme') || 'light';
+  document.getElementById('theme-btn').textContent = t === 'dark' ? '☀ 라이트' : '◑ 다크';
+})();
+
+const TODAY = new Date('2026-04-18T00:00:00');
+
+const EVENTS = [
+  { id:"kim-choeyeop-lecture",      title:"김초엽 작가 초청 특강 – 대학생활과 미래설계",                     category:"강연/특강", deadline:null,          event_date:"2026-04-20", description:"SF 소설가 김초엽 작가(본교 화학과 졸업) 초청 특강. 대학 대강당 19:00–20:30. 사전 신청 없이 자유 청강 가능.",                                                   link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=79",  added:"2026-04-16" },
+  { id:"apple-dev-academy",         title:"애플 디벨로퍼 아카데미 여름학기 온라인 설명회",                   category:"강연/특강", deadline:null,          event_date:"2026-04-21", description:"iOS 앱개발 프로세스 기초 여름학기 특강 설명회. Zoom 온라인, 12:30–13:30. 재학생 누구나 참여 가능.",                                                         link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=348", added:"2026-04-14" },
+  { id:"miraejiseong-masterclass",  title:"미래지성 마스터클래스 – 공간·굿즈·광고 맛집이 침대 업계 1위",    category:"강연/특강", deadline:null,          event_date:"2026-04-22", description:"시몬스 전 부사장 김성준 초청 마케팅·브랜드·커리어 특강. 포스텍 계정으로 수강신청 후 참여. PAM/직원 교육시간 인정.",                                        link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=79",  added:"2026-04-17" },
+  { id:"ibio-seminar-422",          title:"[융합대학원] I-BIO/MED 정기세미나",                               category:"강연/특강", deadline:null,          event_date:"2026-04-22", description:"융합대학원 I-BIO/MED 정기세미나. 4월 22일(수) 17:00 개최.",                                                                                              link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=79",  added:"2026-04-17" },
+  { id:"sts-seminar-423",           title:"STS 융합부전공 세미나 – TALKTALK: 2036 AI ODYSSEY",              category:"강연/특강", deadline:null,          event_date:"2026-04-23", description:"과학기술학(STS) 융합부전공 세미나. AI 시대 기술·사회의 충돌 지점을 STS 관점으로 분석. 4월 23일(목) 개최.",                                               link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=79",  added:"2026-04-15" },
+  { id:"sk-hynix-lecture",          title:"[반도체대학원] SK Hynix 특강 – DRAM Tech. & HBM 기술",           category:"강연/특강", deadline:"2026-04-21", event_date:"2026-04-24", description:"SK Hynix 김철규 팀장 특강. DRAM Tech. Overview & HBM 기술. 환경공학동 101호, 14:00–16:00. 참가 등록 마감 4/21.",                                        link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=79",  added:"2026-04-16" },
+  { id:"humanities-colloquium-424", title:"[인문사회학부 콜로퀴움] 에너지 전환, 기술 너머의 이야기",        category:"강연/특강", deadline:null,          event_date:"2026-04-24", description:"소비자·기업의 에너지 전환 선택 요인과 정책 역할 주제. 4월 24일(금) 개최.",                                                                                link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=79",  added:"2026-04-16" },
+  { id:"ugrp-2026",                 title:"2026년 학부생 연구프로그램 (UGRP) 신청",                         category:"연구참여", deadline:"2026-04-23", event_date:null,         description:"학부생 연구프로그램(UGRP) 접수기한 연장. 활동 신청 4/23(목)까지, 연구계획서 4/26(일)까지. PAMS에서 신청.",                                               link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=348", added:"2026-04-07" },
+  { id:"sf-workshop-2026",          title:"2026 상반기 SF창작 워크숍 참여자 모집",                           category:"모집",     deadline:null,          event_date:"2026-05-22", description:"8명 선발, 황모과 작가 지도. 5/22 창작방법론 특강 → 6/19 중간합평 → 7/24 최종합평. SF 창작에 관심 있는 포스테키안.",                                       link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=79",  added:"2026-04-17" },
+  { id:"innotech-startup",          title:"포항 강소특구 이노테크 발굴·창업지원 사업 (예비)창업자 모집",    category:"모집",     deadline:"2026-04-19", event_date:null,         description:"포항 지역 예비창업자·기술창업기업 대상. 신청 기간 ~4/19. 사업 기간 2026.3~2027.3.",                                                                     link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=79",  added:"2026-04-15" },
+  { id:"asan-doers-2026",           title:"[아산나눔재단] 아산 두어스 2026 – 20대 예비창업가 모집",          category:"모집",     deadline:"2026-04-20", event_date:null,         description:"글로벌 창업 도전 20대(만19~29세) 예비창업가·팀 모집. 아이디어 단계부터 지원하는 인큐베이팅 프로그램. 4/20 마감.",                                       link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=348", added:"2026-04-14" },
+  { id:"overseas-dispatch-2026",    title:"2026-2차 대학원생 해외파견 지원 프로그램",                        category:"해외관련", deadline:"2026-04-20", event_date:null,         description:"대학원 재학생 해외출장형 파견 지원. 파견 기간 2026.6.1~2027.2.28. 단기 항공료 실비 지원(300만원 이내). 4/20 마감.",                                    link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=79",  added:"2026-04-13" },
+  { id:"paransadari-2026",          title:"2026 파란사다리사업 해외연수 참가자 모집",                         category:"해외관련", deadline:null,          event_date:null,         description:"경제·사회적 취약계층 재학생 글로벌 진로 탐색 지원. 총 60명 선발. 교육부·한국장학재단 주관.",                                                              link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=348", added:"2026-04-15" },
+  { id:"denmark-summer-school",     title:"[주한덴마크대사관] AI in Life Science & Quantum Summer School",  category:"해외관련", deadline:null,          event_date:"2026-08-10", description:"코펜하겐 현지 (8/10~21). ① AI in Life Science ② Niels Bohr Quantum Summer School. 박사과정·초기 연구자 대상.",                                          link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=348", added:"2026-04-15" },
+  { id:"koica-volunteer-2026",      title:"KOICA 청년중기봉사단 (아프리카·중남미) 파견 단원 모집",           category:"해외관련", deadline:"2026-05-03", event_date:null,         description:"온라인 1개월 + 해외 4개월 혼합형 봉사. 파견 2026.8.18~. 대학 추천서 접수 시 선발 우대.",                                                                link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=348", added:"2026-04-15" },
+  { id:"ir-noncredit-2026",         title:"2026학년도 Non-Credit Program 참여자 모집 (상시)",               category:"해외관련", deadline:null,          event_date:null,         description:"학부·대학원생 대상 국제화 Non-Credit Program 상시 모집. ir.postech.ac.kr에서 상세 확인.",                                                               link:"https://ir.postech.ac.kr/ir/board/notice.do",              added:"2025-12-05" },
+  { id:"scholarship-president-ug",  title:"[학부] 2026년 대통령과학장학금 신규장학생 신청",                  category:"장학금",   deadline:"2026-04-22", event_date:null,         description:"1학년·3학년 신청 가능. 등록금 전액 + 학업장려비 250만원/학기. 이공계 의무종사 제도 폐지됨.",                                                             link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=348", added:"2026-04-09" },
+  { id:"scholarship-president-grad",title:"[대학원] 2026년 대통령과학장학금 신규장학생 선발",                category:"장학금",   deadline:"2026-04-22", event_date:null,         description:"석사/박사/통합 과정, 신입·재학 무관 신청 가능. 석사 월 150만원, 박사 월 200만원. 타 장학금과 중복 수혜 가능.",                                         link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=348", added:"2026-04-09" },
+  { id:"scholarship-jawook",        title:"[학부/대학원] 2026학년도 조재욱 장학금 신청 (~4/24)",            category:"장학금",   deadline:"2026-04-24", event_date:null,         description:"학자금 지원 사각지대 학생 생활비 지원 장학금. 학부·대학원 모두 신청 가능. 신청 마감 4/24(금).",                                                         link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=348", added:"2026-04-01" },
+  { id:"esg-contest-2026",          title:"2026 포스텍 ESG 콘텐츠·아이디어 공모전",                         category:"공모전",   deadline:null,          event_date:null,         description:"포스텍 학부생·대학원생 대상. 트랙1: ESG 콘텐츠 제작, 트랙2: ESG 아이디어 제안. 학부 PAMS / 대학원 PAGE로 지원.",                                      link:"https://board.postech.ac.kr/home/mainHome.do?boardNo=348", added:"2026-04-06" },
+];
+
+const parseDate = s => s ? new Date(s + 'T00:00:00') : null;
+const diffDays  = s => { const d = parseDate(s); return d ? Math.round((d - TODAY) / 86400000) : null; };
+const fmtDate   = s => { if (!s) return ''; const d = parseDate(s); return `${d.getMonth()+1}/${d.getDate()}`; };
+const catClass  = c => c.replace('/','').replace(/\s/g,'');
+
+function cdLabel(days) {
+  if (days === null) return '';
+  if (days < 0)   return `D+${-days}`;
+  if (days === 0) return 'D-DAY';
+  return `D-${days}`;
+}
+function chipMod(days) {
+  if (days === null || days < 0) return '';
+  if (days <= 2) return 'mod-urgent';
+  if (days <= 7) return 'mod-soon';
+  return '';
+}
+
+let activeFilter = '전체';
+let activeSort   = 'urgent';
+
+function sorted(list) {
+  const c = [...list];
+  if (activeSort === 'urgent') return c.sort((a,b)=>(a.deadline||a.event_date||'9999').localeCompare(b.deadline||b.event_date||'9999'));
+  if (activeSort === 'event')  return c.sort((a,b)=>(a.event_date||'9999').localeCompare(b.event_date||'9999'));
+  return c.sort((a,b)=>b.added.localeCompare(a.added));
+}
+
+function renderTimeline() {
+  let html = '';
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(TODAY);
+    d.setDate(d.getDate() + i);
+    const ds = d.toISOString().slice(0,10);
+    const isToday = i === 0;
+    const label = `${d.getMonth()+1}/${d.getDate()}`;
+    const dayName = ['일','월','화','수','목','금','토'][d.getDay()];
+    const deadlines = EVENTS.filter(e => e.deadline === ds);
+    const events    = EVENTS.filter(e => e.event_date === ds);
+    const maxDots = 4;
+    let dots = '', count = 0;
+    for (const _ of deadlines) { if (count >= maxDots) break; dots += `<div class="tl-dot deadline"></div>`; count++; }
+    for (const _ of events)    { if (count >= maxDots) break; dots += `<div class="tl-dot event"></div>`;    count++; }
+    const extra = (deadlines.length + events.length) - maxDots;
+    if (extra > 0) dots += `<span class="tl-more">+${extra}</span>`;
+    html += `<div class="tl-day${isToday?' today':''}">
+      <div class="tl-day-label">${isToday?'오늘':label}<br><span style="opacity:.55;font-size:8px">${dayName}</span></div>
+      <div class="tl-day-col">${dots}</div>
+    </div>`;
+  }
+  document.getElementById('timeline-track').innerHTML = html;
+}
+
+function urgentCardHTML(ev) {
+  const dd = diffDays(ev.deadline);
+  const clamp = Math.min(Math.max(dd, 0), 3);
+  const bc = catClass(ev.category);
+  const addedD    = parseDate(ev.added);
+  const deadlineD = parseDate(ev.deadline);
+  const total  = (deadlineD - addedD) / 86400000;
+  const passed = (TODAY     - addedD) / 86400000;
+  const fillPct = Math.max(5, Math.min(98, (passed / total) * 100));
+  return `<div class="urgent-card days-${clamp}">
+    <div class="urgent-dday">
+      <div class="dday-label">${cdLabel(dd)}</div>
+      <div class="dday-sub">마감 ${fmtDate(ev.deadline)}</div>
+    </div>
+    <div class="urgent-body">
+      <div class="urgent-card-top">
+        <span class="cat-badge ${bc}">${ev.category}</span>
+        <div class="urgent-card-title">${ev.title}</div>
+      </div>
+      <div class="urgent-card-desc">${ev.description}</div>
+      <div class="urgent-card-footer">
+        <div class="depletion-bar"><div class="depletion-fill" style="width:${fillPct}%"></div></div>
+        <a class="urgent-link" href="${ev.link}" target="_blank">원문 →</a>
+      </div>
+    </div>
+  </div>`;
+}
+
+function cardHTML(ev) {
+  const dd = diffDays(ev.deadline), ed = diffDays(ev.event_date);
+  const bc = catClass(ev.category);
+  let chips = '';
+  if (ev.deadline)   chips += `<span class="date-chip type-deadline ${chipMod(dd)}"><span class="dot"></span>마감 ${fmtDate(ev.deadline)} <span class="cd">${cdLabel(dd)}</span></span>`;
+  if (ev.event_date) chips += `<span class="date-chip type-event ${chipMod(ed)}"><span class="dot"></span>행사 ${fmtDate(ev.event_date)} <span class="cd">${cdLabel(ed)}</span></span>`;
+  return `<div class="card" data-cat="${ev.category}">
+    <div class="card-title">${ev.title}</div>
+    <div class="card-desc">${ev.description}</div>
+    <div class="card-footer">
+      <span class="cat-badge ${bc}">${ev.category}</span>
+      ${chips ? `<div class="card-dates">${chips}</div>` : ''}
+    </div>
+    <a class="card-link" href="${ev.link}" target="_blank">원문 →</a>
+  </div>`;
+}
+
+function renderAll() {
+  const list = activeFilter === '전체' ? EVENTS : EVENTS.filter(e => e.category === activeFilter);
+  const s = sorted(list);
+  document.getElementById('event-count').textContent = s.length;
+  const urgentList   = s.filter(e => { const d=diffDays(e.deadline); return d!==null && d>=0 && d<=3; });
+  const upcomingList = s.filter(e => { const d=diffDays(e.event_date); return !urgentList.includes(e) && d!==null && d>=0; });
+  const restList     = s.filter(e => !urgentList.includes(e) && !upcomingList.includes(e));
+  let html = '';
+  if (urgentList.length) {
+    html += `<div class="urgent-strip">
+      <div class="urgent-header">
+        <div class="urgent-pulse"></div>
+        <span class="urgent-title">마감 임박</span>
+        <span class="urgent-hcount">${urgentList.length}건</span>
+      </div>
+      ${urgentList.map(urgentCardHTML).join('')}
+    </div>`;
+  }
+  const section = (title, items) => items.length
+    ? `<div class="section">
+        <div class="section-header">
+          <span class="section-title">${title}</span>
+          <span class="section-count">${items.length}건</span>
+        </div>
+        <div class="cards-grid">${items.map(cardHTML).join('')}</div>
+      </div>` : '';
+  html += section('예정 행사', upcomingList);
+  html += section('공지', restList);
+  if (!s.length) html = '<div class="empty">해당 카테고리의 이벤트가 없습니다.</div>';
+  document.getElementById('container').innerHTML = html;
+}
+
+function setFilter(cat, btn) {
+  activeFilter = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+function toggleSort() {
+  document.getElementById('sort-dropdown').classList.toggle('open');
+}
+function setSort(val, label, el) {
+  activeSort = val;
+  document.getElementById('sort-trigger').textContent = label;
+  document.querySelectorAll('.sort-option').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('sort-dropdown').classList.remove('open');
+  renderAll();
+}
+document.addEventListener('click', e => {
+  if (!document.querySelector('.sort-wrap').contains(e.target))
+    document.getElementById('sort-dropdown').classList.remove('open');
+});
+
+renderTimeline();
+renderAll();
+</script>
+</body>
+</html>

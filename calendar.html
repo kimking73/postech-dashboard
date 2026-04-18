@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POSTECH 달력 대시보드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script>(function(){const t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+  :root {
+    --page:    #e6e9f4;
+    --paper:   #f4f5fb;
+    --paper-2: #ffffff;
+    --lift:    #dde0ee;
+
+    --wire:    rgba(30,40,80,0.08);
+    --wire-em: rgba(30,40,80,0.15);
+
+    --ink:   #1a1f35;
+    --ink-2: #525d7a;
+    --ink-3: #8b96b5;
+
+    --postech: #1e3a8a;
+    --blue:    #3b82f6;
+
+    --c-lec: #7c3aed; --c-lec-bg: #ede9fe; --c-lec-tx: #5b21b6;
+    --c-res: #0284c7; --c-res-bg: #e0f2fe; --c-res-tx: #0369a1;
+    --c-rec: #059669; --c-rec-bg: #d1fae5; --c-rec-tx: #065f46;
+    --c-ovs: #d97706; --c-ovs-bg: #fef3c7; --c-ovs-tx: #92400e;
+    --c-sch: #dc2626; --c-sch-bg: #fee2e2; --c-sch-tx: #991b1b;
+    --c-con: #c026d3; --c-con-bg: #fae8ff; --c-con-tx: #86198f;
+
+    --mono: 'SF Mono', 'Menlo', 'Courier New', monospace;
+  }
+
+  [data-theme="dark"] {
+    --page:    #0d1117;
+    --paper:   #141c2e;
+    --paper-2: #1a2440;
+    --lift:    #1e2a42;
+
+    --wire:    rgba(255,255,255,0.07);
+    --wire-em: rgba(255,255,255,0.13);
+
+    --ink:   #dde3f0;
+    --ink-2: #7a8aaa;
+    --ink-3: #3f4d68;
+
+    --postech: #4f7ef8;
+    --blue:    #60a5fa;
+
+    --c-lec: #a78bfa; --c-lec-bg: rgba(124,58,237,0.2);  --c-lec-tx: #c4b5fd;
+    --c-res: #38bdf8; --c-res-bg: rgba(2,132,199,0.2);   --c-res-tx: #7dd3fc;
+    --c-rec: #34d399; --c-rec-bg: rgba(5,150,105,0.2);   --c-rec-tx: #6ee7b7;
+    --c-ovs: #fbbf24; --c-ovs-bg: rgba(217,119,6,0.2);   --c-ovs-tx: #fcd34d;
+    --c-sch: #f87171; --c-sch-bg: rgba(220,38,38,0.2);   --c-sch-tx: #fca5a5;
+    --c-con: #e879f9; --c-con-bg: rgba(192,38,211,0.2);  --c-con-tx: #f0abfc;
+  }
+  [data-theme="dark"] .header { box-shadow: 0 1px 0 var(--wire); }
+  [data-theme="dark"] .cal-cell.today { background: rgba(59,130,246,0.12); }
+  [data-theme="dark"] .cal-cell.today .cell-date { background: rgba(59,130,246,0.25); }
+  [data-theme="dark"] .cal-cell:nth-child(7n+1) .cell-date { color: rgba(248,113,113,0.8); }
+  [data-theme="dark"] .cal-cell:nth-child(7n)   .cell-date { color: rgba(96,165,250,0.8); }
+  [data-theme="dark"] .chip.type-event { background: rgba(59,130,246,0.2); color: #93c5fd; }
+  [data-theme="dark"] .chip.type-event .chip-dot { background: var(--blue); }
+  [data-theme="dark"] .date-tag.ev { background: rgba(59,130,246,0.2); color: #93c5fd; }
+  [data-theme="dark"] .date-tag.urgent { background: rgba(220,38,38,0.2); color: #fca5a5; }
+  [data-theme="dark"] .modal-overlay { background: rgba(0,0,0,0.65); }
+  [data-theme="dark"] .side-panel { box-shadow: -4px 0 16px rgba(0,0,0,0.4); }
+  [data-theme="dark"] .spinner { border-color: rgba(255,255,255,0.15); border-top-color: var(--blue); }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', -apple-system, sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    height: 100vh;
+    display: flex; flex-direction: column; overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ══════════════════════════════
+     Header
+  ══════════════════════════════ */
+  .header {
+    background: var(--paper);
+    border-bottom: 1px solid var(--wire);
+    padding: 0 28px;
+    height: 56px;
+    display: flex; align-items: center; gap: 14px; flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(30,40,80,0.06);
+  }
+
+  .logo {
+    width: 32px; height: 32px; background: var(--postech);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1px;
+    flex-shrink: 0;
+  }
+  .logo span {
+    font-family: var(--mono); font-size: 6.5px; font-weight: 700;
+    color: rgba(255,255,255,0.95); letter-spacing: 0.4px; line-height: 1;
+  }
+
+  .header-title { font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: -0.4px; }
+
+  .nav-tabs { display: flex; gap: 2px; margin-left: 4px; }
+  .nav-tab {
+    padding: 5px 12px; border-radius: 7px; font-size: 12px; font-weight: 500;
+    border: none; color: var(--ink-3);
+    background: transparent; text-decoration: none; transition: all 0.15s; cursor: pointer;
+  }
+  .nav-tab:hover  { color: var(--ink); background: var(--lift); }
+  .nav-tab.active { background: var(--postech); color: #fff; }
+
+  .header-spacer { flex: 1; }
+
+  .update-area { display: flex; align-items: center; gap: 10px; }
+  .last-updated { font-size: 11px; color: var(--ink-3); }
+  .last-updated span { color: var(--ink-2); font-weight: 600; }
+
+  .update-btn {
+    background: var(--lift); border: none;
+    color: var(--ink-2); padding: 6px 13px; border-radius: 8px;
+    cursor: pointer; font-size: 12px; font-weight: 500;
+    display: flex; align-items: center; gap: 5px; transition: all 0.15s;
+    font-family: inherit;
+  }
+  .update-btn:hover:not(:disabled) { background: var(--wire-em); color: var(--ink); }
+  .update-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .spinner {
+    width: 11px; height: 11px;
+    border: 2px solid rgba(30,40,80,0.2); border-top-color: var(--blue);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ══════════════════════════════
+     Calendar Toolbar
+  ══════════════════════════════ */
+  .cal-toolbar {
+    background: var(--paper);
+    border-bottom: 1px solid var(--wire);
+    padding: 8px 20px;
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
+  .month-nav { display: flex; align-items: center; gap: 6px; }
+  .nav-arrow {
+    width: 30px; height: 30px; border-radius: 8px;
+    border: 1px solid var(--wire-em);
+    background: var(--paper-2); color: var(--ink-2);
+    cursor: pointer; font-size: 15px;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .nav-arrow:hover { background: var(--lift); color: var(--ink); }
+
+  .month-label {
+    font-size: 15px; font-weight: 700; min-width: 110px;
+    text-align: center; letter-spacing: -0.3px; color: var(--ink);
+  }
+
+  .today-btn {
+    padding: 5px 12px; border-radius: 7px;
+    border: 1px solid var(--wire-em);
+    background: transparent; color: var(--ink-2);
+    cursor: pointer; font-size: 12px; font-weight: 500;
+    transition: all 0.15s; font-family: inherit;
+  }
+  .today-btn:hover { background: var(--lift); color: var(--ink); }
+
+  .cal-toolbar-spacer { flex: 1; }
+
+  .legend { display: flex; gap: 12px; align-items: center; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--ink-3); font-weight: 500; }
+  .legend-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  /* ══════════════════════════════
+     Layout
+  ══════════════════════════════ */
+  .cal-layout { flex: 1; display: flex; overflow: hidden; }
+
+  /* ══════════════════════════════
+     Calendar Grid
+  ══════════════════════════════ */
+  .cal-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .cal-header-row {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    background: var(--paper); border-bottom: 1px solid var(--wire);
+    flex-shrink: 0;
+  }
+  .cal-dow {
+    padding: 8px 0; text-align: center;
+    font-size: 10px; font-weight: 700;
+    color: var(--ink-3); letter-spacing: 0.8px; text-transform: uppercase;
+  }
+  .cal-dow:first-child { color: rgba(220,38,38,0.7); }
+  .cal-dow:last-child  { color: rgba(37,99,235,0.7); }
+
+  .cal-grid {
+    flex: 1; display: grid; grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: 1fr; overflow: hidden;
+    background: var(--wire);
+    gap: 1px;
+  }
+
+  .cal-cell {
+    background: var(--paper);
+    padding: 7px 8px;
+    display: flex; flex-direction: column; gap: 3px;
+    min-height: 0; overflow: hidden; position: relative;
+    transition: background 0.12s;
+    cursor: default;
+  }
+  .cal-cell.other-month { background: var(--page); opacity: 0.5; }
+  .cal-cell.today { background: #eff6ff; }
+  .cal-cell:not(.other-month):hover { background: var(--lift); cursor: pointer; }
+
+  .cell-date {
+    font-size: 11px; font-weight: 600; color: var(--ink-3);
+    flex-shrink: 0; line-height: 1; width: fit-content;
+  }
+  .cal-cell.today .cell-date {
+    color: var(--blue); font-weight: 800;
+    background: #dbeafe; border-radius: 5px;
+    padding: 2px 6px;
+  }
+  .cal-cell:nth-child(7n+1) .cell-date { color: rgba(220,38,38,0.65); }
+  .cal-cell:nth-child(7n)   .cell-date { color: rgba(37,99,235,0.65); }
+  .cal-cell.today .cell-date { color: var(--blue) !important; }
+
+  .event-chips { display: flex; flex-direction: column; gap: 2px; overflow: hidden; flex: 1; min-height: 0; }
+
+  .chip {
+    font-size: 10px; font-weight: 500; padding: 2px 6px; border-radius: 4px;
+    cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: filter 0.1s; flex-shrink: 0;
+    display: flex; align-items: center; gap: 3px;
+  }
+  .chip:hover { filter: brightness(0.93); }
+  .chip .chip-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Deadline chip — always red-tinted */
+  .chip.type-deadline {
+    background: var(--c-sch-bg); color: var(--c-sch-tx);
+  }
+  .chip.type-deadline .chip-dot { background: #ef4444; }
+
+  /* Event chip — category color */
+  .chip.type-event { background: #dbeafe; color: #1d4ed8; }
+  .chip.type-event .chip-dot { background: var(--blue); }
+
+  .chip.cat-강연특강.type-event { background: var(--c-lec-bg); color: var(--c-lec-tx); }
+  .chip.cat-강연특강.type-event .chip-dot { background: var(--c-lec); }
+  .chip.cat-연구참여.type-event { background: var(--c-res-bg); color: var(--c-res-tx); }
+  .chip.cat-연구참여.type-event .chip-dot { background: var(--c-res); }
+  .chip.cat-모집.type-event { background: var(--c-rec-bg); color: var(--c-rec-tx); }
+  .chip.cat-모집.type-event .chip-dot { background: var(--c-rec); }
+  .chip.cat-해외관련.type-event { background: var(--c-ovs-bg); color: var(--c-ovs-tx); }
+  .chip.cat-해외관련.type-event .chip-dot { background: var(--c-ovs); }
+  .chip.cat-장학금.type-deadline { background: var(--c-sch-bg); color: var(--c-sch-tx); }
+  .chip.cat-장학금.type-deadline .chip-dot { background: var(--c-sch); }
+  .chip.cat-공모전.type-deadline { background: var(--c-con-bg); color: var(--c-con-tx); }
+  .chip.cat-공모전.type-deadline .chip-dot { background: var(--c-con); }
+
+  .more-chips {
+    font-size: 10px; font-weight: 600; color: var(--ink-3);
+    padding: 1px 4px; cursor: pointer; transition: color 0.15s;
+  }
+  .more-chips:hover { color: var(--blue); }
+
+  /* ══════════════════════════════
+     Side Panel
+  ══════════════════════════════ */
+  .side-panel {
+    width: 0; overflow: hidden; flex-shrink: 0;
+    background: var(--paper-2);
+    border-left: 1px solid var(--wire);
+    display: flex; flex-direction: column;
+    transition: width 0.25s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: -4px 0 16px rgba(30,40,80,0.06);
+  }
+  .side-panel.open { width: 320px; }
+
+  .panel-header {
+    padding: 14px 16px; border-bottom: 1px solid var(--wire);
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+  }
+  .panel-date { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+
+  .panel-close {
+    width: 28px; height: 28px; border-radius: 7px;
+    border: 1px solid var(--wire-em);
+    background: transparent; color: var(--ink-3);
+    cursor: pointer; font-size: 13px;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .panel-close:hover { background: var(--lift); color: var(--ink); }
+
+  .panel-events {
+    overflow-y: auto; flex: 1; padding: 12px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .panel-events::-webkit-scrollbar { width: 4px; }
+  .panel-events::-webkit-scrollbar-track { background: transparent; }
+  .panel-events::-webkit-scrollbar-thumb { background: var(--lift); border-radius: 2px; }
+
+  .panel-card {
+    background: var(--paper); border: 1px solid var(--wire);
+    border-radius: 12px; padding: 13px 14px;
+    display: flex; flex-direction: column; gap: 8px;
+    box-shadow: 0 1px 3px rgba(30,40,80,0.05);
+    transition: box-shadow 0.15s;
+  }
+  .panel-card:hover { box-shadow: 0 3px 10px rgba(30,40,80,0.09); }
+
+  .panel-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+  .cat-badge {
+    font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .cat-badge.강연특강 { color: var(--c-lec-tx); background: var(--c-lec-bg); }
+  .cat-badge.연구참여 { color: var(--c-res-tx); background: var(--c-res-bg); }
+  .cat-badge.모집     { color: var(--c-rec-tx); background: var(--c-rec-bg); }
+  .cat-badge.해외관련 { color: var(--c-ovs-tx); background: var(--c-ovs-bg); }
+  .cat-badge.장학금   { color: var(--c-sch-tx); background: var(--c-sch-bg); }
+  .cat-badge.공모전   { color: var(--c-con-tx); background: var(--c-con-bg); }
+
+  .src-badge { font-size: 10px; color: var(--ink-3); white-space: nowrap; }
+
+  .panel-card-title {
+    font-size: 13px; font-weight: 600; line-height: 1.5;
+    letter-spacing: -0.2px; color: var(--ink);
+  }
+  .panel-card-desc { font-size: 12px; color: var(--ink-2); line-height: 1.65; }
+
+  .date-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+  .date-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: var(--mono); font-size: 10px; font-weight: 500;
+    padding: 3px 8px; border-radius: 20px;
+  }
+  .date-tag.dl { background: var(--c-sch-bg); color: var(--c-sch-tx); }
+  .date-tag.ev { background: #dbeafe; color: #1d4ed8; }
+  .date-tag .d { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .date-tag.dl .d { background: #ef4444; }
+  .date-tag.ev .d { background: var(--blue); }
+  .date-tag .cd { font-weight: 700; }
+  .date-tag.urgent { background: #fecaca; color: #991b1b; }
+
+  .panel-link {
+    font-size: 11px; font-weight: 500; color: var(--blue); text-decoration: none;
+    display: inline-flex; align-items: center; gap: 4px;
+    padding-top: 6px; border-top: 1px solid var(--wire);
+    opacity: 0.7; transition: opacity 0.15s;
+  }
+  .panel-link:hover { opacity: 1; }
+
+  .panel-empty { padding: 40px 16px; text-align: center; color: var(--ink-3); font-size: 12px; }
+
+  /* ══════════════════════════════
+     Update Modal
+  ══════════════════════════════ */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(30,40,80,0.35); z-index: 100;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--paper-2); border: 1px solid var(--wire-em);
+    border-radius: 16px; padding: 24px; width: 420px; max-width: 90vw;
+    box-shadow: 0 24px 64px rgba(30,40,80,0.18);
+  }
+  .modal h2 { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: var(--ink); }
+  .modal p  { font-size: 12px; color: var(--ink-2); line-height: 1.7; margin-bottom: 14px; }
+  .modal-code {
+    background: var(--lift); border: 1px solid var(--wire-em); border-radius: 8px;
+    padding: 11px 13px; font-family: var(--mono);
+    font-size: 12px; color: var(--postech); margin-bottom: 18px; font-weight: 500;
+  }
+  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal-btn {
+    padding: 8px 16px; border-radius: 8px; cursor: pointer;
+    font-size: 12px; font-weight: 600; border: none; font-family: inherit; transition: all 0.15s;
+  }
+  .modal-btn.primary   { background: var(--postech); color: white; }
+  .modal-btn.primary:hover { background: #1e40af; }
+  .modal-btn.secondary { background: var(--lift); color: var(--ink-2); }
+  .modal-btn.secondary:hover { background: var(--wire-em); color: var(--ink); }
+
+  /* ══════════════════════════════
+     Toast
+  ══════════════════════════════ */
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--paper-2); border: 1px solid var(--wire-em);
+    border-radius: 10px; padding: 10px 20px; font-size: 12px; font-weight: 500;
+    box-shadow: 0 8px 24px rgba(30,40,80,0.14);
+    opacity: 0; transition: opacity 0.25s; pointer-events: none; z-index: 200;
+    color: var(--ink);
+  }
+  .toast.show    { opacity: 1; }
+  .toast.success { border-color: rgba(5,150,105,0.3); color: #065f46; }
+  .toast.error   { border-color: rgba(220,38,38,0.3); color: #991b1b; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo"><span>POS</span><span>TECH</span></div>
+  <div class="header-title">학생 대시보드</div>
+  <nav class="nav-tabs">
+    <a class="nav-tab" href="index.html">목록</a>
+    <a class="nav-tab active" href="calendar.html">달력</a>
+  </nav>
+  <div class="header-spacer"></div>
+  <button class="update-btn" id="theme-btn" onclick="toggleTheme()">◑ 다크</button>
+  <div class="update-area">
+    <div class="last-updated">수집: <span id="last-updated-label">—</span></div>
+    <button class="update-btn" id="update-btn" onclick="triggerUpdate()">
+      <span id="update-icon">↻</span>
+      <span id="update-text">업데이트</span>
+    </button>
+  </div>
+</header>
+
+<div class="cal-toolbar">
+  <div class="month-nav">
+    <button class="nav-arrow" onclick="prevMonth()">‹</button>
+    <div class="month-label" id="month-label"></div>
+    <button class="nav-arrow" onclick="nextMonth()">›</button>
+  </div>
+  <button class="today-btn" onclick="goToday()">오늘</button>
+  <div class="cal-toolbar-spacer"></div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>마감일</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>행사일</div>
+  </div>
+</div>
+
+<div class="cal-layout">
+  <div class="cal-main" id="cal-main">
+    <div class="cal-header-row">
+      <div class="cal-dow">일</div><div class="cal-dow">월</div><div class="cal-dow">화</div>
+      <div class="cal-dow">수</div><div class="cal-dow">목</div><div class="cal-dow">금</div>
+      <div class="cal-dow">토</div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+
+  <div class="side-panel" id="side-panel">
+    <div class="panel-header">
+      <div class="panel-date" id="panel-date"></div>
+      <button class="panel-close" onclick="closePanel()">✕</button>
+    </div>
+    <div class="panel-events" id="panel-events"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="update-modal">
+  <div class="modal">
+    <h2>대시보드 업데이트</h2>
+    <p>
+      업데이트를 실행하려면 터미널에서 아래 명령어로 로컬 서버를 실행하세요.<br>
+      서버가 실행되면 자동으로 포스텍 게시판을 탐색하여 새 일정을 추가합니다.
+    </p>
+    <div class="modal-code">
+      cd ~/Desktop/dashboard<br>
+      python3 server.py
+    </div>
+    <p>
+      서버가 이미 실행 중이라면 <strong>http://localhost:8080</strong>에서 열어주세요.<br>
+      포스텍 게시판에 로그인된 상태여야 업데이트가 가능합니다.
+    </p>
+    <div class="modal-btns">
+      <button class="modal-btn secondary" onclick="closeModal()">닫기</button>
+      <button class="modal-btn primary" onclick="retryUpdate()">다시 시도</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function toggleTheme() {
+  const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('theme', t);
+  document.getElementById('theme-btn').textContent = t === 'dark' ? '☀ 라이트' : '◑ 다크';
+}
+(function(){
+  const t = document.documentElement.getAttribute('data-theme') || 'light';
+  document.getElementById('theme-btn').textContent = t === 'dark' ? '☀ 라이트' : '◑ 다크';
+})();
+
+const TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+
+const EMBEDDED = {"last_updated":"2026-04-18","events":[{"id":"kim-choeyeop-lecture","title":"김초엽 작가 초청 특강 – 대학생활과 미래설계","category":"강연/특강","source":"학교공지","source_detail":"boardNo=79","deadline":null,"event_date":"2026-04-20","description":"SF 소설가 김초엽 작가(본교 화학과 졸업) 초청 특강. 대학 대강당 19:00–20:30. 사전 신청 없이 자유 청강 가능.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=79","added":"2026-04-16"},{"id":"apple-dev-academy","title":"애플 디벨로퍼 아카데미 여름학기 온라인 설명회","category":"강연/특강","source":"학교공지","source_detail":"boardNo=348","deadline":null,"event_date":"2026-04-21","description":"iOS 앱개발 프로세스 기초 여름학기 특강 설명회. Zoom 온라인, 12:30–13:30. 재학생 누구나 참여 가능.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=348","added":"2026-04-14"},{"id":"miraejiseong-masterclass","title":"미래지성 마스터클래스 – 공간·굿즈·광고 맛집이 침대 업계 1위","category":"강연/특강","source":"학교공지","source_detail":"boardNo=79","deadline":null,"event_date":"2026-04-22","description":"시몬스 전 부사장 김성준 초청 마케팅·브랜드·커리어 특강. 포스텍 계정으로 수강신청 후 참여. PAM/직원 교육시간 인정.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=79","added":"2026-04-17"},{"id":"ibio-seminar-422","title":"[융합대학원] I-BIO/MED 정기세미나","category":"강연/특강","source":"학교공지","source_detail":"boardNo=79","deadline":null,"event_date":"2026-04-22","description":"융합대학원 I-BIO/MED 정기세미나. 4월 22일(수) 17:00 개최.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=79","added":"2026-04-17"},{"id":"sts-seminar-423","title":"STS 융합부전공 세미나 – TALKTALK: 2036 AI ODYSSEY","category":"강연/특강","source":"학교공지","source_detail":"boardNo=79","deadline":null,"event_date":"2026-04-23","description":"과학기술학(STS) 융합부전공 세미나. AI 시대 기술·사회의 충돌 지점을 STS 관점으로 분석. 4월 23일(목) 개최.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=79","added":"2026-04-15"},{"id":"sk-hynix-lecture","title":"[반도체대학원] SK Hynix 특강 – DRAM Tech. & HBM 기술","category":"강연/특강","source":"학교공지","source_detail":"boardNo=79","deadline":"2026-04-21","event_date":"2026-04-24","description":"SK Hynix 김철규 팀장 특강. DRAM Tech. Overview & HBM 기술. 환경공학동 101호, 14:00–16:00. 참가 등록 마감 4/21.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=79","added":"2026-04-16"},{"id":"humanities-colloquium-424","title":"[인문사회학부 콜로퀴움] 에너지 전환, 기술 너머의 이야기","category":"강연/특강","source":"학교공지","source_detail":"boardNo=79","deadline":null,"event_date":"2026-04-24","description":"소비자·기업의 에너지 전환 선택 요인과 정책 역할 주제. 4월 24일(금) 개최.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=79","added":"2026-04-16"},{"id":"ugrp-2026","title":"2026년 학부생 연구프로그램 (UGRP) 신청","category":"연구참여","source":"학교공지","source_detail":"boardNo=348","deadline":"2026-04-23","event_date":null,"description":"학부생 연구프로그램(UGRP) 접수기한 연장. 활동 신청 4/23(목)까지, 연구계획서 4/26(일)까지. PAMS에서 신청.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=348","added":"2026-04-07"},{"id":"sf-workshop-2026","title":"2026 상반기 SF창작 워크숍 참여자 모집","category":"모집","source":"학교공지","source_detail":"boardNo=79","deadline":null,"event_date":"2026-05-22","description":"8명 선발, 황모과 작가 지도. 5/22 창작방법론 특강 → 6/19 중간합평 → 7/24 최종합평.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=79","added":"2026-04-17"},{"id":"innotech-startup","title":"포항 강소특구 이노테크 발굴·창업지원 사업 (예비)창업자 모집","category":"모집","source":"학교공지","source_detail":"boardNo=79","deadline":"2026-04-19","event_date":null,"description":"포항 지역 예비창업자·기술창업기업 대상. 신청 기간 ~4/19. 사업 기간 2026.3~2027.3.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=79","added":"2026-04-15"},{"id":"asan-doers-2026","title":"[아산나눔재단] 아산 두어스 2026 – 20대 예비창업가 모집","category":"모집","source":"학교공지","source_detail":"boardNo=348","deadline":"2026-04-20","event_date":null,"description":"글로벌 창업 도전 20대(만19~29세) 예비창업가·팀 모집. 아산나눔재단 인큐베이팅 프로그램. 4/20 마감.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=348","added":"2026-04-14"},{"id":"overseas-dispatch-2026","title":"2026-2차 대학원생 해외파견 지원 프로그램","category":"해외관련","source":"학교공지","source_detail":"boardNo=79","deadline":"2026-04-20","event_date":null,"description":"대학원 재학생 해외출장형 파견 지원. 파견 기간 2026.6.1~2027.2.28. 단기 항공료 실비 지원(300만원 이내).","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=79","added":"2026-04-13"},{"id":"paransadari-2026","title":"2026 파란사다리사업 해외연수 참가자 모집","category":"해외관련","source":"학교공지","source_detail":"boardNo=348","deadline":null,"event_date":null,"description":"경제·사회적 취약계층 재학생 글로벌 진로 탐색 지원. 총 60명 선발. 교육부·한국장학재단 주관.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=348","added":"2026-04-15"},{"id":"denmark-summer-school","title":"[주한덴마크대사관] AI in Life Science & Quantum Summer School","category":"해외관련","source":"학교공지","source_detail":"boardNo=348","deadline":null,"event_date":"2026-08-10","description":"코펜하겐 현지 (8/10~21). ① AI in Life Science ② Niels Bohr Quantum Summer School. 박사과정·초기 연구자 대상.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=348","added":"2026-04-15"},{"id":"koica-volunteer-2026","title":"KOICA 청년중기봉사단 (아프리카·중남미) 파견 단원 모집","category":"해외관련","source":"학교공지","source_detail":"boardNo=348","deadline":"2026-05-03","event_date":null,"description":"온라인 1개월 + 해외 4개월 혼합형 봉사. 파견 2026.8.18~. 대학 추천서 접수 시 선발 우대.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=348","added":"2026-04-15"},{"id":"ir-noncredit-2026","title":"2026학년도 Non-Credit Program 참여자 모집 (상시)","category":"해외관련","source":"학교공지","source_detail":"ir.postech.ac.kr","deadline":null,"event_date":null,"description":"학부·대학원생 대상 국제화 Non-Credit Program 상시 모집.","link":"https://ir.postech.ac.kr/ir/board/notice.do","added":"2025-12-05"},{"id":"scholarship-president-ug","title":"[학부] 2026년 대통령과학장학금 신규장학생 신청","category":"장학금","source":"학교공지","source_detail":"boardNo=348","deadline":"2026-04-22","event_date":null,"description":"1학년·3학년 신청 가능. 등록금 전액 + 학업장려비 250만원/학기. 이공계 의무종사 제도 폐지됨.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=348","added":"2026-04-09"},{"id":"scholarship-president-grad","title":"[대학원] 2026년 대통령과학장학금 신규장학생 선발","category":"장학금","source":"학교공지","source_detail":"boardNo=348","deadline":"2026-04-22","event_date":null,"description":"석사/박사/통합 과정, 신입·재학 무관 신청 가능. 석사 월 150만원, 박사 월 200만원. 타 장학금과 중복 수혜 가능.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=348","added":"2026-04-09"},{"id":"scholarship-jawook","title":"[학부/대학원] 2026학년도 조재욱 장학금 신청 (~4/24)","category":"장학금","source":"학교공지","source_detail":"boardNo=348","deadline":"2026-04-24","event_date":null,"description":"학자금 지원 사각지대 학생 생활비 지원 장학금. 학부·대학원 모두 신청 가능. 신청 마감 4/24(금).","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=348","added":"2026-04-01"},{"id":"esg-contest-2026","title":"2026 포스텍 ESG 콘텐츠·아이디어 공모전","category":"공모전","source":"학교공지","source_detail":"boardNo=348","deadline":null,"event_date":null,"description":"포스텍 학부생·대학원생 대상. 트랙1: ESG 콘텐츠 제작, 트랙2: ESG 아이디어 제안.","link":"https://board.postech.ac.kr/home/mainHome.do?boardNo=348","added":"2026-04-06"}]};
+
+let EVENTS = EMBEDDED.events;
+let lastUpdated = EMBEDDED.last_updated;
+let currentYear, currentMonth;
+
+async function loadEvents() {
+  document.getElementById('last-updated-label').textContent = lastUpdated;
+  renderCalendar();
+  try {
+    const res = await fetch('/api/events', { signal: AbortSignal.timeout(1500) });
+    if (res.ok) {
+      const data = await res.json();
+      EVENTS = data.events || EVENTS;
+      lastUpdated = data.last_updated || lastUpdated;
+      document.getElementById('last-updated-label').textContent = lastUpdated;
+      renderCalendar();
+    }
+  } catch (_) {}
+}
+
+const parseDate = s => { const d = new Date(s + 'T00:00:00'); d.setHours(0,0,0,0); return d; };
+const dateKey  = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const diffDays = d => Math.round((d - TODAY) / 86400000);
+const catClass = c => c.replace('/','').replace(/\s/g,'');
+
+function cdLabel(days) {
+  if (days < 0)   return `D+${-days}`;
+  if (days === 0) return 'D-DAY';
+  return `D-${days}`;
+}
+
+function buildDateMap() {
+  const map = {};
+  const add = (key, ev, type) => { if (!map[key]) map[key] = []; map[key].push({ ev, type }); };
+  for (const ev of EVENTS) {
+    if (ev.event_date) add(ev.event_date, ev, 'event');
+    if (ev.deadline)   add(ev.deadline,   ev, 'deadline');
+  }
+  return map;
+}
+
+const MONTHS_KO = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+
+function renderCalendar() {
+  const dateMap = buildDateMap();
+  const year = currentYear, month = currentMonth;
+  document.getElementById('month-label').textContent = `${year}년 ${MONTHS_KO[month]}`;
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  for (let i = 0; i < totalCells; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell';
+    let d, isCurrentMonth = true;
+
+    if (i < firstDay) {
+      d = new Date(year, month - 1, daysInPrevMonth - firstDay + i + 1);
+      isCurrentMonth = false;
+      cell.classList.add('other-month');
+    } else if (i >= firstDay + daysInMonth) {
+      d = new Date(year, month + 1, i - firstDay - daysInMonth + 1);
+      isCurrentMonth = false;
+      cell.classList.add('other-month');
+    } else {
+      d = new Date(year, month, i - firstDay + 1);
+    }
+
+    if (d.toDateString() === TODAY.toDateString()) cell.classList.add('today');
+
+    const key = dateKey(d);
+    const items = dateMap[key] || [];
+
+    const dateDiv = document.createElement('div');
+    dateDiv.className = 'cell-date';
+    dateDiv.textContent = d.getDate();
+    cell.appendChild(dateDiv);
+
+    if (items.length > 0) {
+      const chipsDiv = document.createElement('div');
+      chipsDiv.className = 'event-chips';
+      const maxVisible = 3;
+      const visible = items.slice(0, maxVisible);
+      const hidden = items.length - maxVisible;
+
+      for (const { ev, type } of visible) {
+        const chip = document.createElement('div');
+        const cc = catClass(ev.category);
+        chip.className = `chip type-${type} cat-${cc}`;
+        chip.innerHTML = `<span class="chip-dot"></span>${ev.title.substring(0,22)}${ev.title.length > 22 ? '…' : ''}`;
+        chip.onclick = e => { e.stopPropagation(); openPanel(key, items, d); };
+        chipsDiv.appendChild(chip);
+      }
+      if (hidden > 0) {
+        const more = document.createElement('div');
+        more.className = 'more-chips';
+        more.textContent = `+${hidden}개 더`;
+        more.onclick = e => { e.stopPropagation(); openPanel(key, items, d); };
+        chipsDiv.appendChild(more);
+      }
+      cell.appendChild(chipsDiv);
+    }
+
+    if (isCurrentMonth) {
+      cell.onclick = () => openPanel(key, items, d);
+    }
+    grid.appendChild(cell);
+  }
+}
+
+let panelOpen = false;
+
+function openPanel(key, items, dateObj) {
+  const panel = document.getElementById('side-panel');
+  const dateEl = document.getElementById('panel-date');
+  const eventsEl = document.getElementById('panel-events');
+
+  const month = dateObj.getMonth() + 1, day = dateObj.getDate();
+  const dow = ['일','월','화','수','목','금','토'][dateObj.getDay()];
+  dateEl.textContent = `${dateObj.getFullYear()}년 ${month}월 ${day}일 (${dow})`;
+  eventsEl.innerHTML = '';
+
+  if (!items || items.length === 0) {
+    eventsEl.innerHTML = '<div class="panel-empty">이 날짜의 일정이 없습니다.</div>';
+  } else {
+    for (const { ev, type } of items) {
+      const card = document.createElement('div');
+      card.className = 'panel-card';
+      const cc = catClass(ev.category);
+      const typeLbl = type === 'deadline' ? '마감일' : '행사일';
+
+      let dateChips = '';
+      if (ev.deadline) {
+        const dl = parseDate(ev.deadline);
+        const days = diffDays(dl);
+        const mod = days >= 0 && days <= 3 ? ' urgent' : '';
+        dateChips += `<span class="date-tag dl${mod}"><span class="d"></span>마감 ${ev.deadline.slice(5).replace('-','/')} <span class="cd">${cdLabel(days)}</span></span>`;
+      }
+      if (ev.event_date) {
+        const ed = parseDate(ev.event_date);
+        const days = diffDays(ed);
+        dateChips += `<span class="date-tag ev"><span class="d"></span>행사 ${ev.event_date.slice(5).replace('-','/')} <span class="cd">${cdLabel(days)}</span></span>`;
+      }
+
+      card.innerHTML = `
+        <div class="panel-card-top">
+          <span class="cat-badge ${cc}">${ev.category}</span>
+          <span class="src-badge">${typeLbl}</span>
+        </div>
+        <div class="panel-card-title">${ev.title}</div>
+        <div class="panel-card-desc">${ev.description}</div>
+        ${dateChips ? `<div class="date-chips">${dateChips}</div>` : ''}
+        <a class="panel-link" href="${ev.link}" target="_blank">원문 보기 →</a>
+      `;
+      eventsEl.appendChild(card);
+    }
+  }
+
+  panel.classList.add('open');
+  panelOpen = true;
+}
+
+function closePanel() {
+  document.getElementById('side-panel').classList.remove('open');
+  panelOpen = false;
+}
+
+function prevMonth() { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; } renderCalendar(); }
+function nextMonth() { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; } renderCalendar(); }
+function goToday()   { currentYear = TODAY.getFullYear(); currentMonth = TODAY.getMonth(); renderCalendar(); }
+
+let isUpdating = false;
+async function triggerUpdate() {
+  if (isUpdating) return;
+  isUpdating = true;
+  const btn = document.getElementById('update-btn');
+  const icon = document.getElementById('update-icon');
+  const text = document.getElementById('update-text');
+  btn.disabled = true;
+  icon.outerHTML = '<span class="spinner" id="update-icon"></span>';
+  text.textContent = '업데이트 중...';
+  try {
+    const res = await fetch('/api/update', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ last_updated: lastUpdated }),
+      signal: AbortSignal.timeout(60000)
+    });
+    if (!res.ok) throw new Error('서버 오류');
+    const data = await res.json();
+    EVENTS = data.events || EVENTS;
+    lastUpdated = data.last_updated || lastUpdated;
+    document.getElementById('last-updated-label').textContent = lastUpdated;
+    renderCalendar();
+    showToast(`업데이트 완료 — ${data.new_count || 0}개 새 일정 추가됨`, 'success');
+  } catch (e) {
+    document.getElementById('update-modal').classList.add('show');
+  } finally {
+    isUpdating = false;
+    btn.disabled = false;
+    document.getElementById('update-icon').outerHTML = '<span id="update-icon">↻</span>';
+    text.textContent = '업데이트';
+  }
+}
+
+function retryUpdate() { closeModal(); triggerUpdate(); }
+function closeModal()  { document.getElementById('update-modal').classList.remove('show'); }
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+currentYear  = TODAY.getFullYear();
+currentMonth = TODAY.getMonth();
+loadEvents();
+
+document.addEventListener('click', e => {
+  if (panelOpen && !e.target.closest('.side-panel') && !e.target.closest('.chip') && !e.target.closest('.more-chips'))
+    closePanel();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft')  prevMonth();
+  if (e.key === 'ArrowRight') nextMonth();
+  if (e.key === 'Escape')     { closePanel(); closeModal(); }
+});
+</script>
+</body>
+</html>
