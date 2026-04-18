@@ -406,6 +406,101 @@
   .toast.show    { opacity: 1; }
   .toast.success { border-color: rgba(5,150,105,0.3); color: #065f46; }
   .toast.error   { border-color: rgba(220,38,38,0.3); color: #991b1b; }
+
+  /* ══ Panel Backdrop (mobile) ══ */
+  .panel-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 49;
+    backdrop-filter: blur(1px);
+  }
+
+  /* ══ Tablet ══ */
+  @media (max-width: 1024px) {
+    .header { padding: 0 20px; }
+    .cal-toolbar { padding: 8px 14px; }
+  }
+
+  /* ══ Mobile ══ */
+  @media (max-width: 640px) {
+    /* Header */
+    .header {
+      padding: 0 14px;
+      height: auto;
+      min-height: 50px;
+      flex-wrap: wrap;
+      padding-top: 9px;
+      padding-bottom: 9px;
+      gap: 8px;
+    }
+    .header-title { font-size: 13px; }
+    .nav-tab { padding: 4px 9px; font-size: 11px; }
+    #theme-btn { padding: 5px 9px; font-size: 11px; }
+    .update-area { gap: 6px; }
+    .last-updated { display: none; }
+    .update-btn { padding: 5px 9px; font-size: 11px; }
+
+    /* Toolbar */
+    .cal-toolbar { padding: 7px 14px; gap: 8px; }
+    .month-label { font-size: 13px; min-width: 88px; }
+    .nav-arrow { width: 28px; height: 28px; font-size: 13px; }
+    .legend { display: none; }
+
+    /* Calendar cells — dots only on mobile */
+    .cal-cell { padding: 4px 5px; gap: 2px; }
+    .cell-date { font-size: 10px; }
+    .event-chips { flex-direction: row; flex-wrap: wrap; gap: 2px; }
+    .chip {
+      font-size: 0; padding: 0; line-height: 0;
+      width: 7px; height: 7px; border-radius: 50%;
+      flex-shrink: 0; overflow: hidden;
+    }
+    .chip .chip-dot { display: none; }
+    .chip.type-deadline { background: #ef4444; }
+    .chip.type-event { background: var(--blue); }
+    .chip.cat-강연특강.type-event { background: var(--c-lec); }
+    .chip.cat-연구참여.type-event { background: var(--c-res); }
+    .chip.cat-모집.type-event { background: var(--c-rec); }
+    .chip.cat-해외관련.type-event { background: var(--c-ovs); }
+    .chip.cat-장학금.type-deadline { background: var(--c-sch); }
+    .chip.cat-공모전.type-deadline { background: var(--c-con); }
+    .more-chips { font-size: 8px; line-height: 8px; }
+
+    /* Side panel → bottom sheet */
+    .side-panel {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      width: 100% !important;
+      height: 0;
+      border-left: none;
+      border-top: 1px solid var(--wire);
+      border-radius: 16px 16px 0 0;
+      box-shadow: 0 -8px 32px rgba(30,40,80,0.18);
+      transition: height 0.3s cubic-bezier(0.4,0,0.2,1);
+      z-index: 50;
+      overflow: hidden;
+    }
+    .side-panel.open {
+      width: 100% !important;
+      height: 65vh;
+    }
+    .panel-backdrop.show { display: block; }
+
+    /* Bottom sheet handle */
+    .panel-header::before {
+      content: '';
+      display: block;
+      width: 36px; height: 4px;
+      background: var(--wire-em);
+      border-radius: 2px;
+      margin: 0 auto 12px;
+    }
+    .panel-header { flex-direction: column; align-items: stretch; }
+    .panel-header > div, .panel-header > button {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+  }
 </style>
 </head>
 <body>
@@ -460,6 +555,8 @@
     <div class="panel-events" id="panel-events"></div>
   </div>
 </div>
+
+<div class="panel-backdrop" id="panel-backdrop" onclick="closePanel()"></div>
 
 <div class="modal-overlay" id="update-modal">
   <div class="modal">
@@ -619,6 +716,7 @@ function renderCalendar() {
 let panelOpen = false;
 
 function openPanel(key, items, dateObj) {
+  document.getElementById('panel-backdrop').classList.add('show');
   const panel = document.getElementById('side-panel');
   const dateEl = document.getElementById('panel-date');
   const eventsEl = document.getElementById('panel-events');
@@ -670,6 +768,7 @@ function openPanel(key, items, dateObj) {
 
 function closePanel() {
   document.getElementById('side-panel').classList.remove('open');
+  document.getElementById('panel-backdrop').classList.remove('show');
   panelOpen = false;
 }
 
